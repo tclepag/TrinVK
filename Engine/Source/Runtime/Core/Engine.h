@@ -6,13 +6,16 @@
 #define ENGINE_H
 
 
-
 namespace Trin::Runtime::Core {
+    class Engine {
+    public:
+        Engine();
 
-class Engine {
+        ~Engine();
 
-};
+    private:
 
+    };
 }
 
 #endif //ENGINE_H
