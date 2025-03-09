@@ -1,12 +1,23 @@
 //
-// Created by lepag on 3/6/2025.
+// Created by lepag on 3/8/2025.
 //
 
 #include "Engine.h"
 
-namespace Trin {
-namespace Runtime {
-namespace Core {
-} // Core
-} // Runtime
-} // Trin
+#include "VulkanContext.h"
+
+namespace Trin::Runtime::Core {
+    Engine::Engine() {
+
+    }
+
+    bool Engine::init() {
+        return true;
+    }
+
+    bool Engine::run() {
+    }
+
+    bool Engine::shutdown() {
+    }
+}
