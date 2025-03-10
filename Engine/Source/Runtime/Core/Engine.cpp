@@ -4,12 +4,8 @@
 
 #include "Engine.h"
 
-#include "VulkanContext.h"
-
 namespace Trin::Runtime::Core {
-    Engine::Engine() {
-
-    }
+    Engine::Engine() {}
 
     bool Engine::init() {
         return true;

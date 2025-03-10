@@ -6,19 +6,13 @@
 #define SYSTEM_H
 
 #include <string>
-#include <windows.h>
 
 namespace Trin::Helpers {
     class System {
       public:
-        static void SetHWND(HWND hWnd) {
-              hwnd = hWnd;
-        }
         static void PostFatalError(const std::string& title, const std::string& message) {
-            MessageBox(hwnd, reinterpret_cast<LPCWSTR>(message.c_str()), reinterpret_cast<LPCWSTR>(title.c_str()), MB_ICONERROR | MB_OK);
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title.c_str(), message.c_str(), nullptr);
         }
-        private:
-          static HWND hwnd;
     };
 }
 

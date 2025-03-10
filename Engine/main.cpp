@@ -1,11 +1,9 @@
-#include <windows.h>
-
+#include <iostream>
 #include "Core/Engine.h"
-#include "Helpers/Console.h"
 
 using namespace Trin::Runtime::Core;
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd) {
+int main() {
     try {
         const auto engine = std::make_unique<Engine>();
         if (bool result = engine->init(); !result) {

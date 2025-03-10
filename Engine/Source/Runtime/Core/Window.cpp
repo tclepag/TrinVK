@@ -1,46 +1,25 @@
 //
-// Created by lepag on 3/8/2025.
+// Created by lepag on 3/9/25.
 //
 
 #include "Window.h"
 
-
 namespace Trin::Runtime::Core {
-
-    bool Window::init() {
-        // Create Window Class
-        WNDCLASSEX winClass = {};
-        winClass.lpszClassName = L"TRINVK";
-        winClass.hInstance = GetModuleHandle(nullptr);
-        winClass.lpfnWndProc = WndProc;
-        // Register the class
-        RegisterClassEx(&winClass);
-
-        // Create Window
-        m_hWnd = CreateWindowEx(
-            0,
-            winClass.lpszClassName,
-            L"TRINVK",
-            WS_OVERLAPPEDWINDOW,
-            CW_USEDEFAULT, CW_USEDEFAULT, 640, 480,
-            nullptr,
-            nullptr,
-            winClass.hInstance,
-            nullptr
+    Window::Window(const WindowCreateInfo& info) {
+        m_window = SDL_CreateWindow(
+            info.title.c_str(),
+            SDL_WINDOWPOS_UNDEFINED,
+            SDL_WINDOWPOS_UNDEFINED,
+            SDL_WINDOW_VULKAN
         );
 
-        if (m_hWnd == nullptr) {
-            System::PostFatalError("WINDOW FAILURE", "FAILED TO CREATE WIN32 WINDOW");
-            return false;
+        if (!m_window) {
+            std::cerr << "Failed to create window: " << SDL_GetError() << std::endl;
+            throw std::runtime_error(SDL_GetError());
         }
-
-        System::SetHWND(m_hWnd);
-        ShowWindow(m_hWnd, SW_SHOW);
-        UpdateWindow(m_hWnd);
-        return true;
     }
 
-    LRESULT Window::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-        return DefWindowProc(hWnd, msg, wParam, lParam);
+    Window::~Window() {
+        SDL_DestroyWindow(m_window);
     }
 }

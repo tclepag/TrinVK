@@ -7,12 +7,6 @@ set(TRIN_PROJECT_DIR Engine)
 set(TRIN_OUTPUT_DIR ${CMAKE_BINARY_DIR}/TrinityVulkan)
 
 # TrinVK Platforms
-## Currently we are doing Windows only
-if(NOT WIN32)
-    message(FATAL_ERROR "This project is Windows-only")
-endif()
-
-add_definitions(-DWIN32_LEAN_AND_MEAN -DNOMINMAX)
 
 ## See Engine/CMakeLists.txt
 
@@ -22,13 +16,18 @@ add_definitions(-DWIN32_LEAN_AND_MEAN -DNOMINMAX)
 ### Check if the PC environment exists
 if (NOT DEFINED ENV{VULKAN_SDK})
     message(WARNING "VULKAN_SDK ENV VARIABLE NOT SET, VULKAN WILL NOT BE FOUND")
+else ()
+    set(VULKAN_SDK $ENV{VULKAN_SDK})
 endif ()
 
 
 ### Get the Vulkan Graphics API
 find_package(Vulkan REQUIRED)
 if(Vulkan_FOUND)
-    set(VMA_INCLUDE_DIR "${Vulkan_INCLUDE_DIRS}/vma")
+    message(STATUS "FOUND VULKAN: ${Vulkan_VERSION}")
+    message(STATUS "VULKAN LIBRARIES: ${Vulkan_LIBRARIES}")
+    message(STATUS "VULKAN INCLUDE DIR: ${Vulkan_INCLUDE_DIRS}")
+    set(VMA_INCLUDE_DIR "${VULKAN_SDK}/include/vma")
     if(NOT EXISTS "${VMA_INCLUDE_DIR}/vk_mem_alloc.h")
         message(FATAL_ERROR "VMA not found at ${VMA_INCLUDE_DIR}. You may need to set VMA_INCLUDE_DIR manually.")
     endif()
@@ -37,6 +36,9 @@ else ()
             "VULKAN IS REQUIRED FOR TRINVK TO BUILD AND RUN, VULKAN CAN BE FOUND AT: https://vulkan.lunarg.com/sdk/home"
     )
 endif ()
+
+## Get SDL3
+find_package(SDL3 CONFIG REQUIRED)
 
 # TrinVK Build
 ## Check to see if our current build profile is called Release
