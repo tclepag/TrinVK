@@ -5,6 +5,8 @@
 #ifndef VECTOR2_H
 #define VECTOR2_H
 
+#include <cmath>
+
 namespace Trin::Math {
     class Vector2 {
     public:

@@ -6,6 +6,7 @@
 #define VULKANCORE_H
 
 #include <iostream>
+#include <optional>
 #include <set>
 #include <vulkan/vulkan.hpp>
 
@@ -39,6 +40,11 @@ namespace Trin::Runtime::Core {
         PhysicalDeviceType type;
         uint32_t score;
     };
+    struct SwapChainSupportDetails {
+        vk::SurfaceCapabilitiesKHR capabilities;
+        std::vector<vk::SurfaceFormatKHR> formats;
+        std::vector<vk::PresentModeKHR> presentModes;
+    };
 class VulkanCore {
 public:
     // Constructors/Destructors
@@ -59,6 +65,9 @@ public:
     /// Cleans up Vulkan instances
     bool cleanup() const;
 
+    /// Find the queue families for this physicalDevice
+    QueueFamilyIndices findQueueFamilies(const PhysicalDevice& physicalDevice);
+
     /// Returns the Graphics Queue
     [[nodiscard]] Queue getGraphicsQueue() const {
         return m_graphicsQueue;
@@ -68,8 +77,26 @@ public:
         return m_presentQueue;
     }
 
+    [[nodiscard]] Device getDevice() const {
+        return m_device;
+    }
+
+    [[nodiscard]] PhysicalDevice getPhysicalDevice() const {
+        return m_physicalDevice;
+    }
+
+    [[nodiscard]] Window* getWindow() const {
+        return m_window;
+    }
+
+    [[nodiscard]] SurfaceKHR getSurface() const {
+        return m_surface;
+    }
+
+    [[nodiscard]] SwapChainSupportDetails querySwapChainSupport(const vk::PhysicalDevice& device) const;
+
     /// Returns whether Vulkan supports the extension
-    bool isExtensionSupported(const String& extension);
+    static bool isExtensionSupported(const String& extension);
 private:
     // Vulkan Core Objects
     /// Core layers
@@ -97,10 +124,11 @@ private:
 
     /// Checks if our extension list supports the use of this physical device
     bool isDeviceSupported(const PhysicalDevice& physicalDevice);
-    /// Find the queue families for this physicalDevice
-    QueueFamilyIndices findQueueFamilies(const PhysicalDevice& physicalDevice);
     /// Retrieves the most powerful physical device on this computer
     PhysicalDevice getBestDevice();
+
+    // Other objects
+    Window* m_window;
 
     // Vulkan Debugging
     /// Captures and handles errors/debug messages

@@ -30,10 +30,10 @@ public:
         return m_window;
     }
 
-    [[nodiscard]] Vector2* GetSize() const {
+    [[nodiscard]] Vector2 GetSize() const {
         int width = 0, height = 0;
         SDL_GetWindowSize(m_window, &width, &height);
-        return new Vector2(static_cast<float>(width), static_cast<float>(height));
+        return {static_cast<float>(width), static_cast<float>(height)};
     }
 
     void cleanup() const {

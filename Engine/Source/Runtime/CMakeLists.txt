@@ -5,6 +5,10 @@ set(RUNTIME_SOURCES
         Core/VulkanCore.h
         Core/Window.cpp
         Core/Window.h
+        Rendering/VulkanRenderer.cpp
+        Rendering/VulkanRenderer.h
+        Rendering/Commands/VulkanCMDS.cpp
+        Rendering/Commands/VulkanCMDS.h
 )
 
 add_library(Trin_Runtime ${RUNTIME_SOURCES})

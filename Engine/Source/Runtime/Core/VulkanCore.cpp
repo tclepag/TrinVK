@@ -80,8 +80,9 @@ namespace Trin::Runtime::Core {
         }
 
         // Create VkSurface
+        m_window = info.window;
         VkSurfaceKHR vkSurface = VK_NULL_HANDLE;
-        SDL_Vulkan_CreateSurface(info.window->GetWindow(), static_cast<VkInstance>(m_instance), nullptr, &vkSurface);
+        SDL_Vulkan_CreateSurface(m_window->GetWindow(), m_instance, nullptr, &vkSurface);
         // Convert VkSurfaceKHR to C++ binding version
         m_surface = SurfaceKHR(vkSurface);
 
@@ -98,11 +99,11 @@ namespace Trin::Runtime::Core {
         };
 
         // Create queue create infos for each unique queue family
-        std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
+        std::vector<DeviceQueueCreateInfo> queueCreateInfos;
         float queuePriority = 1.0f;
 
         for (uint32_t queueFamily : uniqueQueueFamilies) {
-            vk::DeviceQueueCreateInfo queueCreateInfo;
+            DeviceQueueCreateInfo queueCreateInfo;
             queueCreateInfo.queueFamilyIndex = queueFamily;
             queueCreateInfo.queueCount = 1;
             queueCreateInfo.pQueuePriorities = &queuePriority;
@@ -110,8 +111,9 @@ namespace Trin::Runtime::Core {
         }
 
         // Define device features to enable
-        vk::PhysicalDeviceFeatures deviceFeatures;
-        // Enable specific features you need
+        PhysicalDeviceFeatures deviceFeatures;
+
+        // Graphics features
         deviceFeatures.samplerAnisotropy = VK_TRUE;
 
         // Create the logical device
@@ -161,6 +163,21 @@ namespace Trin::Runtime::Core {
             m_instance.destroy();
         }
         return true;
+    }
+
+    SwapChainSupportDetails VulkanCore::querySwapChainSupport(const PhysicalDevice& device) const {
+        SwapChainSupportDetails details;
+
+        // Get surface capabilities
+        details.capabilities = device.getSurfaceCapabilitiesKHR(m_surface);
+
+        // Get supported surface formats
+        details.formats = device.getSurfaceFormatsKHR(m_surface);
+
+        // Get supported presentation modes
+        details.presentModes = device.getSurfacePresentModesKHR(m_surface);
+
+        return details;
     }
 
     bool VulkanCore::isDeviceSupported(const PhysicalDevice &physicalDevice) {
