@@ -28,6 +28,12 @@ namespace Trin::Runtime::Core {
         this->m_applicationName = info.applicationName;
         this->m_window = info.window;
 
+        // Initialize GLSlang
+        if (!glslang::InitializeProcess()) {
+            std::cerr << "Failed to initialize GLSLang!" << std::endl;
+            throw std::runtime_error("Failed to initialize GLSLang!");
+        }
+
         // Initialize Vulkan
         initInstance();
         createDebugUtilsMessengerEXT();
@@ -60,6 +66,8 @@ namespace Trin::Runtime::Core {
             m_instance.destroy();
             m_instance = nullptr;
         }
+
+        glslang::FinalizeProcess();
     }
 
     void VulkanContext::initInstance() {

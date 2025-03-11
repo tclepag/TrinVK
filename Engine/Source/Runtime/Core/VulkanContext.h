@@ -10,6 +10,10 @@
 #include <vulkan/vulkan.hpp>
 #include "Math/Vector3.h"
 
+#include <glslang/Public/ShaderLang.h>
+#include <glslang/SPIRV/GlslangToSpv.h>
+#include <glslang/Include/ResourceLimits.h>
+
 namespace Trin::Constants {
     constexpr auto ENGINE_NAME = "TrinVK";
     constexpr auto ENGINE_VERSION = VK_MAKE_API_VERSION(0, 1, 0, 0);
