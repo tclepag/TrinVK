@@ -80,7 +80,7 @@ namespace Trin::Runtime::Core {
         createInfo.pApplicationInfo = &appInfo;
 
 #ifdef __APPLE__
-        createInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+        createInfo.flags |= InstanceCreateFlagBits::eEnumeratePortabilityKHR;
 #endif
 
         // Build our instance
@@ -112,8 +112,22 @@ namespace Trin::Runtime::Core {
         deviceFeatures.samplerAnisotropy = true;
         deviceFeatures.fillModeNonSolid = true;
 
+        std::vector<const char*> deviceExtensions = {
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME
+        };
+
+        // Add macOS-specific device extensions
+#ifdef __APPLE__
+        deviceExtensions.push_back("VK_KHR_portability_subset");
+#endif
+
         DeviceCreateInfo createInfo{};
         createInfo.pEnabledFeatures = &deviceFeatures;
+        createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
+        createInfo.pQueueCreateInfos = queueCreateInfos.data();
+        createInfo.pEnabledFeatures = &deviceFeatures;
+        createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
+        createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
         try {
             m_device = m_physicalDevice.createDevice(createInfo);
@@ -351,7 +365,8 @@ namespace Trin::Runtime::Core {
         }
 
 #ifdef __APPLE__
-        requiredExtensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+        extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+        extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 #endif
 
         // If validation layers are enabled, add the debug extension
@@ -368,8 +383,8 @@ namespace Trin::Runtime::Core {
             physicalDevice.enumerateDeviceExtensionProperties();
 
         // Define required device extensions
-        const std::vector<const char*> deviceExtensions = {
-            VK_KHR_SWAPCHAIN_EXTENSION_NAME  // Swap chain is always required for rendering
+        const std::vector deviceExtensions = {
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME
         };
 
         // Create a set of required extensions (easier for checking)

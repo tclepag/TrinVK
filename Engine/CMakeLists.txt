@@ -1,14 +1,19 @@
+add_executable(TrinVK
+        main.cpp
+        Source/Helpers/File.h
+)
+
 set(HELPERS
         Source/Helpers/Console.h
         Source/Helpers/System.h
         Source/Helpers/Types.h
+        Source/Helpers/File.h
 )
 
 set(MATH
-)
-
-add_executable(TrinVK
-        main.cpp
+        Source/Math/Vector2.h
+        Source/Math/Vector3.h
+        Source/Math/Vector4.h
 )
 
 target_compile_definitions(TrinVK PRIVATE
