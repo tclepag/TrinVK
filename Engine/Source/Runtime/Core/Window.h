@@ -32,10 +32,10 @@ public:
         return m_window;
     }
 
-    [[nodiscard]] Vector2 GetSize() const {
+    [[nodiscard]] std::array<int, 2> GetSize() const {
         int width = 0, height = 0;
         glfwGetWindowSize(m_window, &width, &height);
-        return {static_cast<float>(width), static_cast<float>(height)};
+        return {width, height};
     }
 
     VkSurfaceKHR createSurface(Instance instance) const;

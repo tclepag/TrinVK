@@ -11,6 +11,12 @@ set(RUNTIME_SOURCES
         Graphics/VulkanProgram.h
         Graphics/VulkanShader.cpp
         Graphics/VulkanShader.h
+        Core/VulkanCommandBuffer.cpp
+        Core/VulkanCommandBuffer.h
+        Rendering/RenderTargets/VulkanRenderTarget.cpp
+        Rendering/RenderTargets/VulkanRenderTarget.h
+        Rendering/RenderTargets/VulkanScreenRenderTarget.cpp
+        Rendering/RenderTargets/VulkanScreenRenderTarget.h
 )
 
 add_library(Trin_Runtime ${RUNTIME_SOURCES})
