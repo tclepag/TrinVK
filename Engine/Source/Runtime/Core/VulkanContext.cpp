@@ -193,6 +193,9 @@ namespace Trin::Runtime::Core {
         // Get the present queue handle
         m_presentQueue = m_device.getQueue(indices.presentFamily.value(), 0);
 
+        // Get the transfer queue handle
+        m_transferQueue = m_device.getQueue(indices.transferFamily.value(), 0);
+
         std::cout << "Queue handles retrieved successfully" << std::endl;
     }
 
@@ -217,7 +220,26 @@ namespace Trin::Runtime::Core {
             }
         }
 
+        for (uint32_t i = 0; i < queueFamilies.size(); i++) {
+            const auto& queueFamily = queueFamilies[i];
 
+            // Check if this queue family supports transfer operations but not graphics
+            // This would be ideal for transfer-only operations
+            if (queueFamily.queueFlags & QueueFlagBits::eTransfer &&
+                !(queueFamily.queueFlags & QueueFlagBits::eGraphics)) {
+                indices.transferFamily = i;
+                }
+        }
+
+        // If no dedicated transfer queue is found, fall back to any queue with transfer support
+        for (uint32_t i = 0; i < queueFamilies.size(); i++) {
+            const auto& queueFamily = queueFamilies[i];
+
+            // Check if this queue family supports transfer operations
+            if (queueFamily.queueFlags & QueueFlagBits::eTransfer) {
+                indices.transferFamily = i;
+            }
+        }
 
         // If we couldn't find a presentation family for the first loop
         // we will search for it

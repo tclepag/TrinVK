@@ -28,10 +28,12 @@ namespace Trin::Runtime::Core {
     struct QueueFamilyIndices {
         std::optional<uint32_t> graphicsFamily;
         std::optional<uint32_t> presentFamily;
+        std::optional<uint32_t> transferFamily;
 
         [[nodiscard]] bool isComplete() const {
             return graphicsFamily.has_value() &&
-                   presentFamily.has_value();
+                   presentFamily.has_value() &&
+                       transferFamily.has_value();
         }
     };
 
@@ -83,6 +85,7 @@ namespace Trin::Runtime::Core {
         [[nodiscard]] PhysicalDevice getPhysicalDevice() const { return m_physicalDevice; }
         [[nodiscard]] Queue getGraphicsQueue() const { return m_graphicsQueue; }
         [[nodiscard]] Queue getPresentQueue() const { return m_presentQueue; }
+        [[nodiscard]] Queue getTransferQueue() const { return m_transferQueue; }
 
     private:
         // ==============
@@ -96,6 +99,7 @@ namespace Trin::Runtime::Core {
         PhysicalDevice m_physicalDevice;
         Queue m_graphicsQueue;
         Queue m_presentQueue;
+        Queue m_transferQueue;
         uint32_t m_apiVersion;
         const char *m_applicationName;
         bool m_enableValidationLayers;

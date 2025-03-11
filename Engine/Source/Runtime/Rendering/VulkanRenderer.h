@@ -7,20 +7,20 @@
 
 #include <vulkan/vulkan.hpp>
 
-#include "VulkanRenderTarget.h"
 #include "Core/VulkanContext.h"
 #include "Graphics/VulkanProgram.h"
+#include "RenderTargets/VulkanRenderTarget.h"
 
 namespace Trin::Runtime::Rendering {
     using namespace vk;
     using namespace Graphics;
     using namespace Core;
+    using namespace RenderTargets;
 
     using Semaphores = std::vector<Semaphore>;
     using Fences = std::vector<Fence>;
     using Images = std::vector<Image>;
     using ImageViews = std::vector<ImageView>;
-    using RenderTargets = std::vector<VulkanRenderTarget>;
 
     using VulkanShaderPrograms = std::vector<VulkanProgram*>;
 
@@ -33,13 +33,20 @@ namespace Trin::Runtime::Rendering {
         void init();
 
         // ==============
-        //     STATES
+        //    PROGRAM
         // ==============
 
-        VulkanProgram* newProgram(const char* name, std::string vertexShaderPath, std::string fragmentShaderPath);
+        VulkanProgram* createProgram(const char* name, std::string vertexShaderPath, std::string fragmentShaderPath);
         void setProgram(VulkanProgram* program);
         void draw();
 
+        // ==============
+        // RENDER TARGETS
+        // ==============
+
+        /// Creates a Render Target with class
+        template<class T>
+        T* createRenderTarget(const char* name);
 
     private:
         // ==============
@@ -52,25 +59,19 @@ namespace Trin::Runtime::Rendering {
         //      CORE
         // ==============
 
-        VulkanProgram* m_currentProgram;
-
         uint32_t m_currentFrame = 0;
         const int MAX_FRAMES_IN_FLIGHT = 2;
-
-        // ==============
-        //     SETUP
-        // ==============
-
-        void createSwapChain();
-        void createImageView();
-        void createRenderPass();
-        void createFrameBuffer();
 
         // ==============
         //    RENDERING
         // ==============
 
-        VulkanShaderPrograms m_shaderPrograms;
+        std::unordered_map<const char*, VulkanRenderTarget*> m_renderTargets;
+        std::unordered_map<const char*, CommandPool> m_commandPools;
+        PipelineCache m_pipelineCache;
+
+        CommandPool m_mainCommandPool;
+        CommandPool m_transferCommandPool;
 
         // ===============
         // SYNCHRONIZATION

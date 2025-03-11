@@ -30,23 +30,7 @@ namespace Trin::Runtime::Rendering::RenderTargets {
     AttachmentConfig VulkanRenderTarget::createAttachment(Format format, ImageUsageFlags usage) {
     }
 
-    void VulkanRenderTarget::createImageView() {
-    }
 
-    void VulkanRenderTarget::createFramebuffer() {
-    }
-
-    void VulkanRenderTarget::createRenderPass() {
-    }
-
-    void VulkanRenderTarget::createDescriptorSetLayout() {
-    }
-
-    void VulkanRenderTarget::createDescriptorPool() {
-    }
-
-    void VulkanRenderTarget::createDescriptorSet() {
-    }
 
     void VulkanRenderTarget::cleanup() const {
         delete this;

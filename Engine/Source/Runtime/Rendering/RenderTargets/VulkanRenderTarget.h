@@ -8,10 +8,12 @@
 #include <vulkan/vulkan.hpp>
 
 #include "Core/VulkanContext.h"
+#include "Graphics/VulkanProgram.h"
 
 namespace Trin::Runtime::Rendering::RenderTargets {
     using namespace vk;
     using namespace Core;
+    using namespace Graphics;
 
     struct AttachmentConfig {
         Format format;                      // Pixel format
@@ -73,7 +75,7 @@ namespace Trin::Runtime::Rendering::RenderTargets {
 
         Extent2D m_extent;
         RenderPass m_renderPass;
-        ClearColorValue m_clearColor {{0.2f, 0.3f, 0.2f, 1.0f}};
+        ClearColorValue m_clearColor = std::array{0.0f, 0.0f, 0.0f, 1.0f};
         ClearValue m_depthClearValue = {{1.0f, 0}};
 
         AttachmentConfig m_colorAttachment;
@@ -83,6 +85,9 @@ namespace Trin::Runtime::Rendering::RenderTargets {
         DeviceMemory m_imageMemory; // Store frames as memory
         ImageView m_imageView;
         Framebuffer m_framebuffer;
+
+        std::vector<VulkanProgram*> m_programs;
+        std::vector<Pipeline> m_pipelines;
 
         // ==============
         //    VIRTUALS
@@ -97,12 +102,13 @@ namespace Trin::Runtime::Rendering::RenderTargets {
         // ==============
 
         AttachmentConfig createAttachment(Format format, ImageUsageFlags usage);
-        void createImageView();
-        void createFramebuffer();
-        void createRenderPass();
-        void createDescriptorSetLayout();
-        void createDescriptorPool();
-        void createDescriptorSet();
+        void createImageView(ImageAspectFlags aspectFlags, ImageView& imageView);
+        void createFramebuffer(Framebuffer& framebuffer);
+        void createRenderPass(RenderPass& renderPass);
+        void createPipeline(VulkanProgram* program, Pipeline& pipeline);
+        void createDescriptorSetLayout(DescriptorSetLayout& descriptorLayout);
+        void createDescriptorPool(DescriptorPool& descriptorPool);
+        void createDescriptorSet(DescriptorSet& descriptorSet);
     };
 
 }
