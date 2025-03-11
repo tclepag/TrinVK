@@ -5,13 +5,14 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_vulkan.h>
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
+#include <GLFW/glfw3native.h>
 #include <iostream>
 
+#include "VulkanContext.h"
 #include "Helpers/Types.h"
 #include "Math/Vector2.h"
-
 
 
 namespace Trin::Runtime::Core {
@@ -20,27 +21,41 @@ namespace Trin::Runtime::Core {
         String title;
         String icoPath;
         Vector2 size;
+        std::shared_ptr<VulkanContext> context;
     };
 class Window {
 public:
     explicit Window(const WindowCreateInfo& info);
     ~Window();
 
-    [[nodiscard]] SDL_Window* GetWindow() const {
+    [[nodiscard]] GLFWwindow* GetWindow() const {
         return m_window;
     }
 
     [[nodiscard]] Vector2 GetSize() const {
         int width = 0, height = 0;
-        SDL_GetWindowSize(m_window, &width, &height);
+        glfwGetWindowSize(m_window, &width, &height);
         return {static_cast<float>(width), static_cast<float>(height)};
     }
+
+    VkSurfaceKHR createSurface(Instance instance) const;
 
     void cleanup() const {
         delete this;
     }
 private:
-    SDL_Window* m_window;
+    // ==============
+    //     VULKAN
+    // ==============
+
+    std::shared_ptr<VulkanContext> m_context;
+    VkSurfaceKHR m_surface;
+
+    // ==============
+    //     WINDOW
+    // ==============
+
+    GLFWwindow* m_window;
 };
 
 }

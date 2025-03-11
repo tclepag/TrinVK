@@ -5,21 +5,32 @@
 #include "Window.h"
 
 namespace Trin::Runtime::Core {
-    Window::Window(const WindowCreateInfo& info) {
-        m_window = SDL_CreateWindow(
+    Window::Window(const WindowCreateInfo& info): m_context(info.context), m_surface(nullptr) {
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
+        m_window = glfwCreateWindow(
+            info.size.x, info.size.y,
             info.title.c_str(),
-            SDL_WINDOWPOS_UNDEFINED,
-            SDL_WINDOWPOS_UNDEFINED,
-            SDL_WINDOW_VULKAN
+            nullptr,
+            nullptr
         );
 
         if (!m_window) {
-            std::cerr << "Failed to create window: " << SDL_GetError() << std::endl;
-            throw std::runtime_error(SDL_GetError());
+            throw std::runtime_error("Failed to create GLFW window");
         }
     }
 
     Window::~Window() {
-        SDL_DestroyWindow(m_window);
+        glfwDestroyWindow(m_window);
+    }
+
+    VkSurfaceKHR Window::createSurface(const Instance instance) const {
+        VkSurfaceKHR surface;
+        VkResult result = glfwCreateWindowSurface(instance, m_window, nullptr, &surface);
+        if (result != VK_SUCCESS) {
+            throw std::runtime_error("Failed to create window surface: " +
+                                     std::to_string(result));
+        }
+        return surface;
     }
 }

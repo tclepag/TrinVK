@@ -37,8 +37,8 @@ else ()
     )
 endif ()
 
-## Get SDL3
-find_package(SDL3 CONFIG REQUIRED)
+## Get GLFW
+find_package(glfw3 CONFIG REQUIRED)
 
 # TrinVK Build
 ## Check to see if our current build profile is called Release

@@ -3,7 +3,7 @@
   "version-string" : "1.0.0",
   "builtin-baseline" : "32c57af41c54eb1b0de0fe311d9497a7e10a9b7e",
   "dependencies" : [ {
-    "name" : "sdl3",
-    "version>=" : "3.2.8"
+    "name" : "glfw3",
+    "version>=" : "3.4#1"
   } ]
 }

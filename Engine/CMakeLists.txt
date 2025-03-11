@@ -11,6 +11,10 @@ add_executable(TrinVK
         main.cpp
 )
 
+target_compile_definitions(TrinVK PRIVATE
+        GLFW_INCLUDE_VULKAN
+)
+
 # Target Trin_Source
 add_subdirectory(Source/Runtime)
 
@@ -23,7 +27,7 @@ target_include_directories(Trin_Runtime PUBLIC
 )
 target_link_libraries(Trin_Runtime PUBLIC
         ${Vulkan_LIBRARIES}
-        SDL3::SDL3
+        glfw
 )
 
 # Link TrinVK Libraries
