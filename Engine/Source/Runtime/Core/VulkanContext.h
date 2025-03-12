@@ -1,177 +1,207 @@
 //
-// Created by lepag on 3/10/2025.
+// Created by lepag on 3/12/25.
 //
 
 #ifndef VULKANCONTEXT_H
 #define VULKANCONTEXT_H
 
-#include <iostream>
 #include <optional>
+#include <set>
 #include <vulkan/vulkan.hpp>
-#include "Math/Vector3.h"
-
-#include <glslang/Public/ShaderLang.h>
-#include <glslang/SPIRV/GlslangToSpv.h>
-#include <glslang/Include/ResourceLimits.h>
-
-namespace Trin::Constants {
-    constexpr auto ENGINE_NAME = "TrinVK";
-    constexpr auto ENGINE_VERSION = VK_MAKE_API_VERSION(0, 1, 0, 0);
-}
 
 namespace Trin::Runtime::Core {
-    using namespace Math;
-    using namespace vk;
-
-    class Window;
-
     struct QueueFamilyIndices {
         std::optional<uint32_t> graphicsFamily;
         std::optional<uint32_t> presentFamily;
-        std::optional<uint32_t> transferFamily;
 
-        [[nodiscard]] bool isComplete() const {
-            return graphicsFamily.has_value() &&
-                   presentFamily.has_value() &&
-                       transferFamily.has_value();
+        [[nodiscard]] bool complete() const {
+            return graphicsFamily.has_value() && presentFamily.has_value();
         }
     };
+    struct Queue {
+        Queue(VkDevice logicalDevice, uint32_t index) {
+            m_id = index;
+            vkGetDeviceQueue(logicalDevice, index, 0, &m_queue);
+        }
+        ~Queue() {
+            m_id = 0;
+            m_queue = VK_NULL_HANDLE;
+            m_physicalDevice = VK_NULL_HANDLE;
+        }
+    private:
+        uint32_t m_id = 0;
+        VkQueue m_queue = VK_NULL_HANDLE;
+        VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
+    };
+    struct PhysicalDevice {
+    private:
+        [[nodiscard]] QueueFamilyIndices getQueueFamilies() const {
+            QueueFamilyIndices indices;
 
-    struct SwapChainSupportDetails {
-        SurfaceCapabilitiesKHR capabilities;
-        std::vector<SurfaceFormatKHR> formats;
-        std::vector<PresentModeKHR> presentModes;
+            // Find queue family count
+            uint32_t queueFamilyCount = 0;
+            vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
+            // Populate vector full of queues
+            std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+            vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, queueFamilies.data());
 
-        [[nodiscard]] bool isAdequate() const {
-            return !formats.empty() && !presentModes.empty();
+            for (uint32_t i = 0; i < queueFamilyCount; i++) {
+                if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+                    indices.graphicsFamily = i;
+                }
+
+                VkBool32 presentSupport = false;
+                vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, &presentSupport);
+                if (presentSupport) {
+                    indices.presentFamily = i;
+                }
+            }
+            return indices;
+        }
+    public:
+        VkPhysicalDevice physicalDevice;
+        VkPhysicalDeviceProperties physicalDeviceProperties{};
+        VkPhysicalDeviceFeatures physicalDeviceFeatures{};
+        VkSurfaceKHR surface;
+        QueueFamilyIndices queueFamily;
+
+        PhysicalDevice(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface): surface(surface) {
+            this->physicalDevice = physicalDevice;
+            vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
+            vkGetPhysicalDeviceFeatures(physicalDevice, &physicalDeviceFeatures);
+
+            queueFamily = getQueueFamilies();
+        }
+
+        /// Checks if all extensions necessary for this
+        /// physical device is currently active for the instance
+        [[nodiscard]] bool isSupported(std::vector<const char*> extensions) const {
+            // First get the amount of extensions
+            uint32_t extensionCount = 0;
+            vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extensionCount, nullptr);
+            // Now populate a vector with the extensions
+            std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+            vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extensionCount, availableExtensions.data());
+
+            std::set<std::string> requiredExtensions(extensions.begin(), extensions.end());
+            for (const auto& extension : availableExtensions) {
+                requiredExtensions.erase(extension.extensionName);
+            }
+
+            return requiredExtensions.empty();
+        }
+
+        [[nodiscard]] uint32_t getScore() const {
+            uint32_t score = 0;
+
+            // Score based on what GPU type we have
+            // Discrete offers the most power
+            // Integrated offers the second best power
+            // The rest are just up to whatever we want to score
+            switch (physicalDeviceProperties.deviceType) {
+                case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+                    score += 1000;
+                    break;
+                case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+                    score += 500;
+                    break;
+                case VK_PHYSICAL_DEVICE_TYPE_CPU:
+                    score += 300;
+                    break;
+                case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+                    score += 100;
+                    break;
+                default:
+                    score += 50;
+                    break;
+            }
+
+            // Higher max image quality (max image dimension) affects performance
+            score += physicalDeviceProperties.limits.maxImageDimension2D;
+
+            // GPU specific checks
+
+            // Does this GPU support Geometry Shaders?
+            if (!physicalDeviceFeatures.geometryShader) {
+                score = 0;
+            }
+
+            // Does this GPU support tessellation
+            if (!physicalDeviceFeatures.tessellationShader) {
+                score = 0;
+            }
+
+            return score;
         }
     };
+    struct Device {
+        std::shared_ptr<PhysicalDevice> physicalDevice;
+        VkDevice logicalDevice = VK_NULL_HANDLE;
+        std::unique_ptr<Queue> graphicsQueue;
+        std::unique_ptr<Queue> presentQueue;
 
-    struct RankedPhysicalDevice {
-        PhysicalDevice physicalDevice;
-        uint32_t score = 0;
+        Device(const VkDeviceCreateInfo &info, const std::shared_ptr<PhysicalDevice>& physicalDevice) {
+            this->physicalDevice = physicalDevice;
+            vkCreateDevice(physicalDevice->physicalDevice, &info, nullptr, &logicalDevice);
+            graphicsQueue = std::make_unique<Queue>(logicalDevice, physicalDevice->queueFamily.graphicsFamily.value());
+            presentQueue = std::make_unique<Queue>(logicalDevice, physicalDevice->queueFamily.presentFamily.value());
+        }
     };
-
-    struct VulkanCreateInfo {
-        const char *applicationName = "TrinVK";
-        uint32_t applicationVersion = VK_MAKE_API_VERSION(0, 1, 0, 0);
-        bool enableValidationLayers = false;
-        std::shared_ptr<Window> window;
-    };
-
     class VulkanContext {
     public:
-        explicit VulkanContext();
-
-        ~VulkanContext();
-
-        // ==============
-        //      MAIN
-        // ==============
-
-
-        /// Starts initialization of Vulkan
-        void init(const VulkanCreateInfo &info);
-
-        /// Cleans up Vulkan
-        void cleanup();
-
-        // ==============
-        //    GETTERS
-        // ==============
-
-        [[nodiscard]] Instance getInstance() const { return m_instance; }
-        [[nodiscard]] Device getDevice() const { return m_device; }
-        [[nodiscard]] PhysicalDevice getPhysicalDevice() const { return m_physicalDevice; }
-        [[nodiscard]] Queue getGraphicsQueue() const { return m_graphicsQueue; }
-        [[nodiscard]] Queue getPresentQueue() const { return m_presentQueue; }
-        [[nodiscard]] Queue getTransferQueue() const { return m_transferQueue; }
-
+        void init();
     private:
         // ==============
-        //  VULKAN CORE
+        //     VULKAN
         // ==============
 
-        Instance m_instance;
-        Device m_device;
-        SurfaceKHR m_surface;
-        std::shared_ptr<Window> m_window;
-        PhysicalDevice m_physicalDevice;
-        Queue m_graphicsQueue;
-        Queue m_presentQueue;
-        Queue m_transferQueue;
-        uint32_t m_apiVersion;
-        const char *m_applicationName;
-        bool m_enableValidationLayers;
+        VkInstance m_instance = VK_NULL_HANDLE;
+        VkSurfaceKHR m_surface = VK_NULL_HANDLE;
+        VkDebugUtilsMessengerEXT m_debugMessenger = VK_NULL_HANDLE;
+        std::shared_ptr<Device> m_device;
+        std::shared_ptr<PhysicalDevice> m_physicalDevice;
 
-        std::vector<const char *> m_extensionNames;
-        std::vector<const char *> m_layerNames;
-
-        /// Creates the Vulkan instance
-        void initInstance();
-
-        /// Creates the Vulkan logical device
-        void initDevice();
-
-        /// Creates the Vulkan Surface
-        void initSurface();
-
-        /// Gets the Vulkan physical device
-        void initPhysicalDevice();
-
-        /// Creates the queues
-        void initQueues();
-
-        /// Gets all Queue Families associated with this physicalDevice
-        QueueFamilyIndices findQueueFamilies(const PhysicalDevice &physicalDevice);
-
-        /// Checks if a physicalDevice is suitable for Vulkan
-        bool isDeviceSuitable(const PhysicalDevice &physicalDevice);
-        /// Returns a rating of GPU effectiveness
-        uint32_t rateDevice(const PhysicalDevice &physicalDevice);
+        std::vector<const char*> m_extensions;
+        std::vector<const char*> m_layers;
 
         // ==============
-        //  VULKAN DEBUG
+        // INITIALIZATION
         // ==============
 
-        DebugUtilsMessengerEXT m_debugger;
 
-        /// Creates a new debugMessenger
-        void createDebugUtilsMessengerEXT();
+        void createInstance();              // First step - establishes Vulkan API connection
+        void createDebugMessenger();        // Set up early for debugging during setup
+        void createSurface();               // Window surface needed for device selection
 
-        /// Destroys the current debug messenger
-        void destroyDebugUtilsMessengerEXT() const;
+        void pickPhysicalDevice();          // Select suitable GPU
+        void createLogicalDevice();         // Logical device and queues
 
-        /// Checks if Vulkan validation layers are supported
-        bool isValidationLayersSupported();
+        // Vulkan Rendering
 
-        /// Returns all extensions that are required based on validation layers
-        std::vector<const char *> getRequiredExtensions() const;
+        //void createSwapChain();             // Display chain
+        //void createImageViews();            // Views into swapchain images
+        //void createRenderPass();            // Define render pass structure
 
-        /// Vulkan Debugger Helper
-        VKAPI_ATTR static VkBool32 VKAPI_CALL debugCallback(
-            VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-            VkDebugUtilsMessageTypeFlagsEXT messageType,
-            const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
-            void *pUserData) {
+        //void createDescriptorSetLayout();   // Define descriptor layouts before pipeline
+        //void createGraphicsPipeline();      // Create graphics pipeline
 
-            // Print the validation layer message
-            std::cerr << "Validation layer: " << pCallbackData->pMessage << std::endl;
+        //void createCommandPool();           // Create command pool (from selected queue family)
+        //void createDepthResources();        // Add this for depth buffer (if needed)
+        //void createFramebuffers();          // Create framebuffers for the render pass
 
-            // Return VK_FALSE to indicate we want Vulkan to continue execution
-            return VK_FALSE;
-        }
+        //void createDescriptorPool();        // Create descriptor pool
+        //void createDescriptorSets();        // Allocate descriptor sets
+
+        //void createCommandBuffers();        // Allocate command buffers
+        //void createSyncObjects();           // Create semaphores and fences
 
         // ==============
-        //     HELPERS
+        //      UTIL
         // ==============
 
-        /// Checks if all extensions required for this physicalDevice are being supported
-        bool checkDeviceExtensionSupport(const PhysicalDevice &physicalDevice);
-
-        /// Gets the swapChain support details for this physicalDevice
-        SwapChainSupportDetails getSwapChainSupport(const PhysicalDevice &physicalDevice) const;
+        static std::vector<const char*> getRequiredExtensions();
     };
+
 }
 
 #endif //VULKANCONTEXT_H

@@ -38,8 +38,6 @@ public:
         return {width, height};
     }
 
-    VkSurfaceKHR createSurface(Instance instance) const;
-
     void cleanup() const {
         delete this;
     }

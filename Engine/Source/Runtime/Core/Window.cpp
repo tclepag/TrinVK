@@ -23,14 +23,4 @@ namespace Trin::Runtime::Core {
     Window::~Window() {
         glfwDestroyWindow(m_window);
     }
-
-    VkSurfaceKHR Window::createSurface(const Instance instance) const {
-        VkSurfaceKHR surface;
-        VkResult result = glfwCreateWindowSurface(instance, m_window, nullptr, &surface);
-        if (result != VK_SUCCESS) {
-            throw std::runtime_error("Failed to create window surface: " +
-                                     std::to_string(result));
-        }
-        return surface;
-    }
 }
